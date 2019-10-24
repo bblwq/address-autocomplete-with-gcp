@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+		<script src="http://maps.google.com/maps/api/js?libraries=places&key=######"></script>
+    </head>
+    <body>
+        Full Address: <input type="text" id="address" style="width:500px;">
+		<ol style="display:flex;">
+			<ul>Street Number: <div id="street_number">N/A</div></ul>
+			<ul>Street Name: <div id="route">N/A</div></ul>
+			<ul>City: <div id="locality">N/A</div></ul>
+			<ul>Province: <div id="administrative_area_level_1">N/A</div></ul>
+			<ul>Postcode: <div id="postal_code">N/A</div></ul>
+			<ul>Country: <div id="country">N/A</div></ul>
+		</ol>
+		<script>
+            var autocomplete = new google.maps.places.Autocomplete($("#address")[0], {});
+            google.maps.event.addListener(autocomplete, 'place_changed', function() {
+                var components = autocomplete.getPlace().address_components;
+				for (index in components) {
+					if ($('#'+components[index].types[0]).length) {
+						$('#'+components[index].types[0]).html(components[index].long_name);
+					}
+				};
+            });
+        </script>
+    </body>
+</html>

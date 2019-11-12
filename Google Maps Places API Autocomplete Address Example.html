@@ -1,29 +1,102 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
-		<script src="http://maps.google.com/maps/api/js?libraries=places&key=######"></script>
-	</head>
-	<body>
-        	Full Address: <input type="text" id="address" style="width:500px;">
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+		<script src="https://maps.google.com/maps/api/js?libraries=places&key=AIzaSyD5eOF6tIaeOFlrOjy-QJTWTAtipME0_zI"></script>
+    </head>
+    <body>
+        Physical Address: <input id="addressSearch" style="width:500px;">
 		<ol style="display:flex;">
-			<ul>Street Number: <div id="street_number">N/A</div></ul>
-			<ul>Street Name: <div id="route">N/A</div></ul>
-			<ul>City: <div id="locality">N/A</div></ul>
-			<ul>Province: <div id="administrative_area_level_1">N/A</div></ul>
-			<ul>Postcode: <div id="postal_code">N/A</div></ul>
-			<ul>Country: <div id="country">N/A</div></ul>
+			<ul>Country: <div id="addressCountry">N/A</div></ul>
+			<ul>Street Number: <div id="addressStreetNumber">N/A</div></ul>
+			<ul>Street Name: <div id="addressStreetName">N/A</div></ul>
+			<ul>Street Type: <div id="addressStreetType">N/A</div></ul>
+			<ul>Street Direction: <div id="addressStreetDirection">N/A</div></ul>
+			<ul id="addressProvince_lable">Province: <div id="addressProvince">N/A</div></ul>
+			<ul id="addressUsState_lable">State: <div id="addressUsState">N/A</div></ul>
+			<ul>City: <div id="addressCity">N/A<div></ul>
+			<ul id="addressMunicipality_lable">Municipality: <div id="addressMunicipality">N/A</div></ul>
+			<ul id="addressPostalCode_lable">Postal Code: <div id="addressPostalCode">N/A</div></ul>
+			<ul id="addressUsZipCode_lable">Zip Code: <div id="addressUsZipCode">N/A</div></ul>
+			<ul id="addressOtherCountryName_lable">Country Name: <div id="addressOtherCountryName">N/A</div></ul>
 		</ol>
-		<script>
-            		var autocomplete = new google.maps.places.Autocomplete($("#address")[0], {fields:["address_components"]});
-            		google.maps.event.addListener(autocomplete, 'place_changed', function() {
-                		var components = autocomplete.getPlace().address_components;
-					for (index in components) {
-						if ($('#'+components[index].types[0]).length) {
-							$('#'+components[index].types[0]).html(components[index].long_name);
-						}
-				};
-            		});
-        	</script>
+		Mailing Address: <input id="mailingAddressSearch" style="width:500px;">
+		<ol style="display:flex;">
+			<ul>Country: <div id="mailingAddressCountry">N/A</div></ul>
+			<ul>Street Number: <div id="mailingAddressStreetNumber">N/A</div></ul>
+			<ul>Street Name: <div id="mailingAddressStreetName">N/A</div></ul>
+			<ul>Street Type: <div id="mailingAddressStreetType">N/A</div></ul>
+			<ul>Street Direction: <div id="mailingAddressStreetDirection">N/A</div></ul>
+			<ul id="mailingAddressProvince_lable">Province: <div id="mailingAddressProvince">N/A</div></ul>
+			<ul id="mailingAddressUsState_lable">State: <div id="mailingAddressUsState">N/A</div></ul>
+			<ul>City/Town: <div id="mailingAddressCity">N/A<div></ul>
+			<ul id="mailingAddressMunicipality_lable">Municipality: <div id="mailingAddressMunicipality">N/A</div></ul>
+			<ul id="mailingAddressPostalCode_lable">Postal Code: <div id="mailingAddressPostalCode">N/A</div></ul>
+			<ul id="mailingAddressUsZipCode_lable">Zip Code: <div id="mailingAddressUsZipCode">N/A</div></ul>
+			<ul id="mailingAddressOtherCountryName_lable">Country Name: <div id="mailingAddressOtherCountryName">N/A</div></ul>
+		</ol>
+		<script type="text/javascript">
+			var route_types = [];
+			var route_directions = [];
+			var usstates = [];
+			var province = [];
+			function populateAddress(autocomplete, lable) {
+				var result = autocomplete.getPlace().address_components.reduce((obj, item) => Object.assign(obj, {[item.types[0]]:item.long_name}), {});
+				var route_items = result.route.split(" ");
+				if (Object.keys(route_directions).includes(route_items[route_items.length-1])) {
+					var route_direction = route_items.pop();
+					$("#"+lable+"StreetDirection").html(route_direction + " : " + route_directions[route_direction]);
+				}
+				streetType = Object.keys(route_types).filter(function(item){return typeof item == 'string' && item.indexOf(route_items[route_items.length-1]) > -1;})[0];
+				if (streetType) {
+					route_items.pop();
+					$("#"+lable+"StreetType").html(streetType + " : " + route_types[streetType]);
+				}
+				$("#"+lable+"Country").html(result.country);
+				$("#"+lable+"StreetNumber").html(result.street_number);
+				$("#"+lable+"StreetName").html(route_items.join(" "));
+				$("#"+lable+"City").html(result.locality || result.postal_town);
+				switch (result.country) {
+					case "Canada":
+						$("#"+lable+"Province").html(result.administrative_area_level_1 + " : " + provinces[result.administrative_area_level_1]);
+						$("#"+lable+"Province_lable").show();
+						$("#"+lable+"Municipality").html(result.administrative_area_level_2);
+						$("#"+lable+"Municipality_lable").show();
+						$("#"+lable+"PostalCode").html(result.postal_code);
+						$("#"+lable+"PostalCode_lable").show();
+						$("#"+lable+"UsState_lable").hide();
+						$("#"+lable+"UsZipCode_lable").hide();
+						$("#"+lable+"OtherCountryName_lable").hide();
+						break;
+					case "United States":
+						$("#"+lable+"UsState").html(result.administrative_area_level_1 + " : " + usstates[result.administrative_area_level_1]);
+						$("#"+lable+"UsState_lable").show();
+						$("#"+lable+"UsZipCode").html(result.postal_code);
+						$("#"+lable+"UsZipCode_lable").show();
+						$("#"+lable+"Province_lable").hide();
+						$("#"+lable+"Municipality_lable").hide();
+						$("#"+lable+"PostalCode_lable").hide();
+						$("#"+lable+"OtherCountryName_lable").hide();
+						break;
+					default:
+						$("#"+lable+"OtherCountryName").html(result.country);
+						$("#"+lable+"OtherCountryName_lable").show();
+						$("#"+lable+"Province_lable").hide();
+						$("#"+lable+"Municipality_lable").hide();
+						$("#"+lable+"PostalCode_lable").hide();
+						$("#"+lable+"UsState_lable").hide();
+						$("#"+lable+"UsZipCode_lable").hide();
+				}
+			}
+			$.when(
+				$.get("https://test.clientaccount.ene.gov.on.ca/PepEnrolment/rest/camsProfileService/getStreetTypes?lang=en", function(data) {route_types = data.reduce((obj, item) => Object.assign(obj, {[item.shortDescription]:item.id}), {});}),
+				$.get("https://test.clientaccount.ene.gov.on.ca/PepEnrolment/rest/camsProfileService/getStreetDirections?lang=en", function(data) {route_directions = data.reduce((obj, item) => Object.assign(obj, {[item.shortDescription]:item.id}), {});}),
+				$.get("https://test.clientaccount.ene.gov.on.ca/PepEnrolment/rest/camsProfileService/getUSStates?lang=en", function(data) {usstates = data.reduce((obj, item) => Object.assign(obj, {[item.description]:item.id}), {});}),
+				$.get("https://test.clientaccount.ene.gov.on.ca/PepEnrolment/rest/camsProfileService/getProvinces?lang=en", function(data) {provinces = data.reduce((obj, item) => Object.assign(obj, {[item.description]:item.id}), {});})
+			).then(
+				google.maps.event.addListener(new google.maps.places.Autocomplete($("#addressSearch")[0], {fields:["address_components"]}), 'place_changed', function() {populateAddress(this, "address");}),
+				google.maps.event.addListener(new google.maps.places.Autocomplete($("#mailingAddressSearch")[0], {fields:["address_components"]}), 'place_changed', function() {populateAddress(this, "mailingAddress");}),
+			);
+        </script>
     </body>
 </html>
